@@ -22,6 +22,7 @@
 
 using std::string;
 using std::vector;
+using std::numeric_limits;
 using std::normal_distribution;
 using std::default_random_engine;
 
@@ -113,13 +114,16 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
  */ 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
                                      vector<LandmarkObs>& observations) {
+  // Initialize number of observations and predicted measurements
+  unsigned int num_observations = observations.size();
+  unsigned int num_predictions = predicted.size();
   // id of particular predicted landmark
   int pred_landmark_id;
   // Initialize x, y, closest distance and current distance
   double delta_x = 0.0, delta_y = 0.0, closest_dist = 0.0, dist = 0.0;
   // Find the predicted landmark measurement closest to each observed
   // measurement, then assign observed measurement with id of predicted
-  for(int i = 0; i < observations.size(); ++i)
+  for(unsigned int i = 0; i < num_observations; ++i)
   {
     // Initialize closest distance to a huge number
     closest_dist = numeric_limits<double>::max();
@@ -127,7 +131,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
     pred_landmark_id = 0;
     // check all predicted measurements until closest one to observed
     // measurement is found, then save the predicted id 
-    for(int j = 0; j < predicted.size(); ++j)
+    for(unsigned int j = 0; j < num_predictions; ++j)
     {
       delta_x = observations[i].x - predicted[j].x;
       delta_y = observations[i].y - predicted[j].y;
