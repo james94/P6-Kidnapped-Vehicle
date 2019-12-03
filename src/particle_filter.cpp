@@ -61,16 +61,52 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   is_initialized = true;
 }
 
+/**
+ * prediction() function
+ * 
+ * Predicts the vehicle's position at the next time step
+ * by updating based on yaw rate and velocity while accounting
+ * for Gaussian sensor noise. Adds measurements to each particle
+ * using prediction step equation, then adds random Gaussian noise.
+ */
 void ParticleFilter::prediction(double delta_t, double std_pos[], 
                                 double velocity, double yaw_rate) {
-  /**
-   * TODO: Add measurements to each particle and add random Gaussian noise.
-   * NOTE: When adding noise you may find std::normal_distribution 
-   *   and std::default_random_engine useful.
-   *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
-   *  http://www.cplusplus.com/reference/random/default_random_engine/
-   */
+  double predict_x, predict_y, predict_theta;
 
+  default_random_engine gen;
+
+  for(int i = 0; i < num_particles; ++i)
+  {
+    // Calculate Prediction Step to add measurements to particles
+    if (yaw_rate != 0)
+    {
+      predict_x = particles[i].x + (velocity/yaw_rate) *
+                  (math.sin(particles[i].theta + yaw_rate*delta_t) -
+                  math.sin(particles[i].theta));
+      predict_y = particles[i].y + (velocity/yaw_rate) *
+                  (math.cos(particles[i].theta) -
+                  math.cos(particles[i].theta + yaw_rate*delta_t));
+      predict_theta = particles[i].theta + yaw_rate*delta_t;
+    }
+    else if (yaw_rate == 0)
+    {
+      predict_x = particles[i].x + (velocity * delta_t) *
+                  (math.cos(particles[i].theta))
+      predict_y = particles[i].y + (velocity * delta_t) *
+                  (math.sin(particles[i].theta))
+      predict_theta = particles[i].theta;
+    }
+
+    // Create normal (Gaussian) distribution for particle predict x, y, theta
+    normal_distribution<double> dist_predict_x(predict_x, std_pos[0]);
+    normal_distribution<double> dist_predict_y(predict_y, std_pos[1]);
+    normal_distribution<double> dist_predict_theta(predict_theta, std_pos[2]);
+
+    // Add random Gaussian noise to each particle's predict x,y,theta using gen
+    particle[i].x = dist_predict_x(gen);
+    particle[i].y = dist_predict_y(gen);
+    particle[i].theta = dist_predict_theta(gen);
+  }
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
