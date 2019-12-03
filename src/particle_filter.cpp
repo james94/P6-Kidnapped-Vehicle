@@ -86,10 +86,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     }
     else if (yaw_rate == 0)
     {
-      predict_x = particles[i].x + (velocity * delta_t) *
-                  (cos(particles[i].theta))
-      predict_y = particles[i].y + (velocity * delta_t) *
-                  (sin(particles[i].theta))
+      predict_x = particles[i].x + (velocity * delta_t) * (cos(particles[i].theta));
+      predict_y = particles[i].y + (velocity * delta_t) * (sin(particles[i].theta));
       predict_theta = particles[i].theta;
     }
 
