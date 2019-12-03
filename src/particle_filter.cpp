@@ -80,12 +80,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     // Calculate Prediction Step to add measurements to particles
     if (yaw_rate != 0)
     {
-      predict_x = particles[i].x + (velocity/yaw_rate) *
-                  (sin(particles[i].theta + yaw_rate*delta_t) -
-                  sin(particles[i].theta));
-      predict_y = particles[i].y + (velocity/yaw_rate) *
-                  (cos(particles[i].theta) -
-                  cos(particles[i].theta + yaw_rate*delta_t));
+      predict_x = particles[i].x + (velocity/yaw_rate) * (sin(particles[i].theta + yaw_rate*delta_t) - sin(particles[i].theta));
+      predict_y = particles[i].y + (velocity/yaw_rate) * (cos(particles[i].theta) - cos(particles[i].theta + yaw_rate*delta_t));
       predict_theta = particles[i].theta + yaw_rate*delta_t;
     }
     else if (yaw_rate == 0)
