@@ -81,19 +81,19 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     if (yaw_rate != 0)
     {
       predict_x = particles[i].x + (velocity/yaw_rate) *
-                  (math.sin(particles[i].theta + yaw_rate*delta_t) -
-                  math.sin(particles[i].theta));
+                  (sin(particles[i].theta + yaw_rate*delta_t) -
+                  sin(particles[i].theta));
       predict_y = particles[i].y + (velocity/yaw_rate) *
-                  (math.cos(particles[i].theta) -
-                  math.cos(particles[i].theta + yaw_rate*delta_t));
+                  (cos(particles[i].theta) -
+                  cos(particles[i].theta + yaw_rate*delta_t));
       predict_theta = particles[i].theta + yaw_rate*delta_t;
     }
     else if (yaw_rate == 0)
     {
       predict_x = particles[i].x + (velocity * delta_t) *
-                  (math.cos(particles[i].theta))
+                  (cos(particles[i].theta))
       predict_y = particles[i].y + (velocity * delta_t) *
-                  (math.sin(particles[i].theta))
+                  (sin(particles[i].theta))
       predict_theta = particles[i].theta;
     }
 
@@ -103,9 +103,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     normal_distribution<double> dist_predict_theta(predict_theta, std_pos[2]);
 
     // Add random Gaussian noise to each particle's predict x,y,theta using gen
-    particle[i].x = dist_predict_x(gen);
-    particle[i].y = dist_predict_y(gen);
-    particle[i].theta = dist_predict_theta(gen);
+    particles[i].x = dist_predict_x(gen);
+    particles[i].y = dist_predict_y(gen);
+    particles[i].theta = dist_predict_theta(gen);
   }
 }
 
