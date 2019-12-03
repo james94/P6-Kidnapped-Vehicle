@@ -109,17 +109,44 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
   }
 }
 
+/**
+ * dataAssociation() function
+ * 
+ * Finds the predicted landmark measurement closest to each observed
+ * measurement, then assigns the observed measurement with the
+ * particular id of the predicted landmark in the map. Thus, each
+ * observation is associated with a predicted landmark identifier.
+ */ 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
                                      vector<LandmarkObs>& observations) {
-  /**
-   * TODO: Find the predicted measurement that is closest to each 
-   *   observed measurement and assign the observed measurement to this 
-   *   particular landmark.
-   * NOTE: this method will NOT be called by the grading code. But you will 
-   *   probably find it useful to implement this method and use it as a helper 
-   *   during the updateWeights phase.
-   */
-
+  // id of particular predicted landmark
+  int pred_landmark_id;
+  // Initialize x, y, closest distance and current distance
+  double delta_x = 0.0, delta_y = 0.0, closest_dist = 0.0, dist = 0.0;
+  // Find the predicted landmark measurement closest to each observed
+  // measurement, then assign observed measurement with id of predicted
+  for(int i = 0; i < observations.size(); ++i)
+  {
+    // Initialize closest distance to a huge number
+    closest_dist = numeric_limits<double>::max();
+    // Initialize predicted landmark identifier
+    pred_landmark_id = 0;
+    // check all predicted measurements until closest one to observed
+    // measurement is found, then save the predicted id 
+    for(int j = 0; j < predicted.size(); ++j)
+    {
+      delta_x = observations[i].x - predicted[j].x;
+      delta_y = observations[i].y - predicted[j].y;
+      dist = sqrt( pow(delta_x, 2.0) + pow(delta_y, 2.0) );
+      if (dist < closest_dist)
+      {
+        closest_dist = dist;
+        pred_landmark_id = predicted[j].id;
+      }
+    }
+    // assign observed measurement with id of predicted landmark in the map
+    observations[i].id = pred_landmark_id;
+  }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
