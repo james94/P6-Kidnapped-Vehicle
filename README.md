@@ -184,3 +184,19 @@ Here is the main protocol that main.cpp uses for uWebSocketIO in communicating w
 ### Program Written To Accomplish Project
 
 - **[particle_filter.cpp](src/particle_filter.cpp)**: contains the code to initialize the particle filter with the kidnapped vehicle's initial location, predict the vehicle's next location from the previous location data, transform the observations from vehicle coordinate to map coordinate, associate the closest landmarks on the map with each observation, compute the likelihood that a particle made those observations based on the associated landmark positions and resample particles keeping only the particles that probably made those observations.
+
+### References
+
+- Udacity SDCE-ND: Localization Class
+  - T2 L1: Introduction to Localizatio
+  - T2 L2: Markov Localization
+  - T2 L3: Motion Models
+  - T2 L4: Particle Filters
+  - T2 L5: Implementation of a Particle Filter
+  - Project: Kidnapped Vehicle
+
+- Helpful GitHub Repositories
+  - [bguisard: Particle Filters for Localization](https://github.com/bguisard/CarND-Kidnapped-Vehicle-Project)
+  - [sohonisaurabh: CarND-Kidnapped-Vehicle-Project](https://github.com/sohonisaurabh/CarND-Kidnapped-Vehicle-Project)
+  - [darienmt: CarND-Kidnapped-Vehicle-P3](https://github.com/darienmt/CarND-Kidnapped-Vehicle-P3)
+  - [mvirgo: Localization with Particle Filters - Finding a Kidnapped Vehicle](https://github.com/mvirgo/Kidnapped-Vehicle-Project)
