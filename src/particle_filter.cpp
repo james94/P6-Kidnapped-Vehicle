@@ -3,7 +3,7 @@
  *
  * Created on: Dec 12, 2016
  * Author: Tiffany Huang
- * Updated on: Dec 2, 2019
+ * Updated on: Dec 4, 2019
  * Contributor: James Medel
  */
 
@@ -25,6 +25,7 @@ using std::vector;
 using std::numeric_limits;
 using std::normal_distribution;
 using std::default_random_engine;
+using std::uniform_real_distribution;
 
 /**
  * init() function
@@ -36,7 +37,7 @@ using std::default_random_engine;
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   default_random_engine gen;
   // Set the number of particles
-  num_particles = 10;
+  num_particles = 100;
 
   // Create normal (Gaussian) distribution for particle x, y, theta
   normal_distribution<double> dist_particle_x(x, std[0]);
@@ -45,7 +46,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
   // Initialize all particles to first position and all weights to 1
   Particle particle;
-  particle.weight = 1;
+  particle.weight = 1.0;
 
   for(int i = 0; i < num_particles; ++i)
   {
@@ -170,7 +171,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
   // Initialize Multivariate Gaussian related variables
   double sig_x, sig_y, x_tobs, y_tobs, mu_x, mu_y, weight, final_weight;
-  unsigned int tobs_landmark_id;
+  unsigned int tobs_landmark_id, pred_landmark_id;
   sig_x = std_landmark[0];
   sig_y = std_landmark[1];
 
@@ -184,10 +185,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     vector<LandmarkObs> transformed_observations;
     for(unsigned int j = 0; j < observations.size(); ++j)
     {
-      x_obs = observations[i].x;
-      y_obs = observations[i].y;
+      x_obs = observations[j].x;
+      y_obs = observations[j].y;
 
-      t_observation.id = observations[i].id;
+      t_observation.id = observations[j].id;
       // transform obs x car to map x coordinate
       t_observation.x = x_part + (cos(theta) * x_obs) - (sin(theta) * y_obs);
       // transform obs y car to map y coordinate
@@ -220,28 +221,61 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       y_tobs = transformed_observations[a].y;
       tobs_landmark_id = transformed_observations[a].id;
 
-      // mapped predicted landmarks closest to tobs
-      mu_x = predicted_landmarks[tobs_landmark_id].x;
-      mu_y = predicted_landmarks[tobs_landmark_id].y;
+      for(unsigned int b = 0; b < predicted_landmarks.size(); ++b)
+      {
+        mu_x = predicted_landmarks[b].x;
+        mu_y = predicted_landmarks[b].y;
+        pred_landmark_id = predicted_landmarks[b].id;
 
-      // calculate each transformed observation weight for current particle
-      weight = multiv_prob(sig_x, sig_y, x_tobs, y_tobs, mu_x, mu_y);
-      // calculate particle's final weight multiply each tobs weight
-      final_weight *= weight;
+        if(tobs_landmark_id == pred_landmark_id)
+        {
+          weight = multiv_prob(sig_x, sig_y, x_tobs, y_tobs, mu_x, mu_y);
+          // calculate particle's final weight multiply each tobs weight
+          if (weight != 0)
+          {
+            final_weight *= weight;
+          }
+        }
+      }
     }
     particles[i].weight = final_weight;
     weights[i] = particles[i].weight;
   }
 }
 
+/**
+ * resample() function
+ * 
+ * Resamples from updated set of particles with replacement probability proportional
+ * to their weight and forms the new set of particles.
+ */
 void ParticleFilter::resample() {
-  /**
-   * TODO: Resample particles with replacement with probability proportional 
-   *   to their weight. 
-   * NOTE: You may find std::discrete_distribution helpful here.
-   *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-   */
-
+  // Declare new set of particles
+  vector<Particle> resampled_particles;
+  // random float from 0.0 to 1.0 generation
+  default_random_engine gen;
+  uniform_real_distribution<> dist(0, 1);
+  // generate random particle index
+  unsigned int index = int(dist(gen) * num_particles-1);
+  double beta = 0.0;
+  double max_weight = *max_element(weights.begin(), weights.end());
+  // Resample M times (M is range of 0 to length of particles array)
+  for(int i = 0; i < num_particles; ++i)
+  {
+    // Draw particle i (i is index) proportional to its weight
+    // Draw random beta value
+    beta += dist(gen) * 2.0 * max_weight;
+    while(beta > weights[index])
+    {
+      beta = beta - weights[index];
+      index = (index + 1) % num_particles;
+    }
+    if (index <= unsigned(num_particles-1))
+    {
+      resampled_particles.push_back(particles[index]);
+    }
+  }
+  particles = resampled_particles;
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
