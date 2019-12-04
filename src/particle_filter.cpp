@@ -147,23 +147,91 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   }
 }
 
+/**
+ * updateWeights() function
+ * 
+ * Updates the weights of each particle using a multi-variate gaussian
+ * distribution. Loop through every particle, transform each observation
+ * from vehicle coordinate to map coordinate system, filter through
+ * each map landmark keeping only map landmarks within sensor range of
+ * current particle, associate each transformed observation to its
+ * nearest predicted map landmark and calculate weight of each particle
+ * using multi-variate gaussian distribution.
+ */
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
                                    const vector<LandmarkObs> &observations, 
                                    const Map &map_landmarks) {
-  /**
-   * TODO: Update the weights of each particle using a mult-variate Gaussian 
-   *   distribution. You can read more about this distribution here: 
-   *   https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-   * NOTE: The observations are given in the VEHICLE'S coordinate system. 
-   *   Your particles are located according to the MAP'S coordinate system. 
-   *   You will need to transform between the two systems. Keep in mind that
-   *   this transformation requires both rotation AND translation (but no scaling).
-   *   The following is a good resource for the theory:
-   *   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-   *   and the following is a good resource for the actual equation to implement
-   *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
-   */
+  // Initialize Transform Observation related variables
+  double x_part, y_part, x_obs, y_obs, theta;
+  LandmarkObs t_observation;
 
+  // Initialize filter map landmark related variables
+  LandmarkObs curr_landmark;
+
+  // Initialize Multivariate Gaussian related variables
+  double sig_x, sig_y, x_tobs, y_tobs, mu_x, mu_y, weight, final_weight;
+  unsigned int tobs_landmark_id;
+  sig_x = std_landmark[0];
+  sig_y = std_landmark[1];
+
+  for(int i = 0; i < num_particles; ++i)
+  {
+    x_part = particles[i].x;
+    y_part = particles[i].y;
+    theta = particles[i].theta;
+
+    // 1. Transform from Vehicle to Map Coordinates with current particle
+    vector<LandmarkObs> transformed_observations;
+    for(unsigned int j = 0; j < observations.size(); ++j)
+    {
+      x_obs = observations[i].x;
+      y_obs = observations[i].y;
+
+      t_observation.id = observations[i].id;
+      // transform obs x car to map x coordinate
+      t_observation.x = x_part + (cos(theta) * x_obs) - (sin(theta) * y_obs);
+      // transform obs y car to map y coordinate
+      t_observation.y = y_part + (sin(theta) * x_obs) + (cos(theta) * y_obs);   
+      transformed_observations.push_back(t_observation); 
+    }
+
+    // 2. Keep only map landmarks within sensor range of current particle
+    vector<LandmarkObs> predicted_landmarks;
+    for(unsigned int m = 0; m < map_landmarks.landmark_list.size(); ++m)
+    {
+      curr_landmark.x = map_landmarks.landmark_list[m].x_f;
+      curr_landmark.y = map_landmarks.landmark_list[m].y_f;
+      curr_landmark.id = map_landmarks.landmark_list[m].id_i;
+      double landmark_dist = dist(curr_landmark.x, curr_landmark.y, x_part, y_part);
+      if (landmark_dist <= sensor_range)
+      {
+        predicted_landmarks.push_back(curr_landmark);
+      }
+    }
+
+    // 3. Find predicted landmarks closest to each transformed observation
+    dataAssociation(predicted_landmarks, transformed_observations);
+
+    final_weight = 1.0;
+    // 4. Calculate weight of each particle using Multivariate Gaussian
+    for(unsigned int a = 0; a < transformed_observations.size(); ++a)
+    {
+      x_tobs = transformed_observations[a].x;
+      y_tobs = transformed_observations[a].y;
+      tobs_landmark_id = transformed_observations[a].id;
+
+      // mapped predicted landmarks closest to tobs
+      mu_x = predicted_landmarks[tobs_landmark_id].x;
+      mu_y = predicted_landmarks[tobs_landmark_id].y;
+
+      // calculate each transformed observation weight for current particle
+      weight = multiv_prob(sig_x, sig_y, x_tobs, y_tobs, mu_x, mu_y);
+      // calculate particle's final weight multiply each tobs weight
+      final_weight *= weight;
+    }
+    particles[i].weight = final_weight;
+    weights[i] = particles[i].weight;
+  }
 }
 
 void ParticleFilter::resample() {
